@@ -1,0 +1,29 @@
+name: seed-index
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  seed:
+    if: ${{ !contains(github.event.head_commit.message, '[skip seed]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch original source
+        run: |
+          curl -sSL -o index.html "https://aka.doubaocdn.com/s/PpHbWDrLVX"
+          md5sum index.html
+          echo "expected: 42e4a5a4f6cfe8f3d68ff4cebd5be989"
+      - name: Commit if changed
+        run: |
+          git config user.name "hellociao1"
+          git config user.email "hello_20267@outlook.com"
+          if [ "$(md5sum index.html | cut -d' ' -f1)" != "42e4a5a4f6cfe8f3d68ff4cebd5be989" ]; then echo "checksum mismatch"; exit 1; fi
+          git add index.html
+          git diff --cached --quiet || git commit -m "feat: 添加 ASCII 视频转换器主程序 [skip seed]"
+          git push
